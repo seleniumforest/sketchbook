@@ -1,0 +1,41 @@
+<html>
+
+<head>
+</head>
+
+<body>
+    <div id="root">
+        <canvas id="canvas" style="border: 1px solid black;"></canvas>
+    </div>
+</body>
+<script>
+    (async () => {
+        const size = 10000;
+        const canvas = document.getElementById("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const memory = new WebAssembly.Memory({ initial: 1 });
+        let wasm = await WebAssembly.instantiateStreaming(fetch("rule110.wasm"), {
+            console: {
+                log: console.log,
+                log_string: (ptr, len) => {
+                    const bytes = new Uint8Array(memory.buffer, ptr, len);
+                    const str = new TextDecoder('utf-8').decode(bytes);
+                    console.log('String from Wasm:', str);
+                },
+            },
+            canvas: {
+                fillRect: (color, ...params) => {
+                    ctx.fillStyle = color === 0 ? "white" : "black";
+                    ctx.fillRect(...params);
+                }
+            },
+            env: {
+                memory: memory
+            }
+        });
+    })();
+</script>
+
+</html>
